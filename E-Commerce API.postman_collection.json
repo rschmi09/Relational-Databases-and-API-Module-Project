@@ -1,0 +1,681 @@
+{
+  "info": {
+    "_postman_id": "99eb49a7-2242-445a-b6f6-5602716540fe",
+    "name": "E-Commerce API",
+    "description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "51611297",
+    "_collection_link": "https://go.postman.co/collection/51611297-99eb49a7-2242-445a-b6f6-5602716540fe?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Create New User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Post-response tests for Create New User endpoint",
+              "",
+              "const responseCode = pm.response.code;",
+              "const jsonData = pm.response.json();",
+              "",
+              "// Test for successful response (200 or 201)",
+              "pm.test(\"Status code is 200 or 201 on success\", function () {",
+              "    if (responseCode === 200 || responseCode === 201) {",
+              "        pm.expect(responseCode).to.be.oneOf([200, 201]);",
+              "    } else {",
+              "        // Skip this test if not a success response",
+              "        this.skip();",
+              "    }",
+              "});",
+              "",
+              "// Test for 400 Bad Request with schema error",
+              "pm.test(\"400 response contains schema validation error\", function () {",
+              "    if (responseCode === 400) {",
+              "        pm.expect(jsonData).to.be.an('object');",
+              "        pm.expect(jsonData).to.have.property('_schema');",
+              "        pm.expect(jsonData._schema).to.be.an('array').that.is.not.empty;",
+              "        console.log('Schema validation error:', jsonData._schema);",
+              "    } else {",
+              "        // Skip this test if not a 400 response",
+              "        this.skip();",
+              "    }",
+              "});",
+              "",
+              "// Validate successful response structure",
+              "pm.test(\"Response has valid JSON structure with required fields for all users\", function () {",
+              "    if (responseCode !== 200 && responseCode !== 201) {",
+              "        this.skip();",
+              "        return;",
+              "    }",
+              "    ",
+              "    // Handle both single object and array responses",
+              "    let usersArray;",
+              "    if (Array.isArray(jsonData)) {",
+              "        usersArray = jsonData;",
+              "    } else if (jsonData && typeof jsonData === 'object') {",
+              "        // Could be a single user object or an object with a \"users\" key",
+              "        if (jsonData.users && Array.isArray(jsonData.users)) {",
+              "            usersArray = jsonData.users;",
+              "        } else if (jsonData.id !== undefined) {",
+              "            // Treat as single user object",
+              "            usersArray = [jsonData];",
+              "        } else {",
+              "            pm.expect.fail('Response structure not recognized');",
+              "        }",
+              "    } else {",
+              "        pm.expect.fail('Response is neither an object nor an array');",
+              "    }",
+              "    ",
+              "    pm.expect(usersArray).to.be.an('array').that.is.not.empty;",
+              "    ",
+              "    // Validate each user in the response",
+              "    usersArray.forEach((user, index) => {",
+              "        pm.expect(user, `User at index ${index}`).to.be.an('object');",
+              "        pm.expect(user, `User at index ${index}`).to.have.property('id');",
+              "        pm.expect(user, `User at index ${index}`).to.have.property('name');",
+              "        pm.expect(user, `User at index ${index}`).to.have.property('email');",
+              "        pm.expect(user, `User at index ${index}`).to.have.property('address');",
+              "    });",
+              "});",
+              "",
+              "// Validate field types on success",
+              "pm.test(\"Response field types are correct for all users\", function () {",
+              "    if (responseCode !== 200 && responseCode !== 201) {",
+              "        this.skip();",
+              "        return;",
+              "    }",
+              "    ",
+              "    let usersArray;",
+              "    if (Array.isArray(jsonData)) {",
+              "        usersArray = jsonData;",
+              "    } else if (jsonData && typeof jsonData === 'object') {",
+              "        if (jsonData.users && Array.isArray(jsonData.users)) {",
+              "            usersArray = jsonData.users;",
+              "        } else if (jsonData.id !== undefined) {",
+              "            usersArray = [jsonData];",
+              "        } else {",
+              "            return;",
+              "        }",
+              "    } else {",
+              "        return;",
+              "    }",
+              "    ",
+              "    usersArray.forEach((user, index) => {",
+              "        pm.expect(typeof user.id, `User ${index} id type`).to.be.oneOf(['number', 'string']);",
+              "        pm.expect(user.name, `User ${index} name`).to.be.a('string');",
+              "        pm.expect(user.email, `User ${index} email`).to.be.a('string');",
+              "        pm.expect(user.address, `User ${index} address`).to.be.a('string');",
+              "    });",
+              "});",
+              "",
+              "// Log response summary",
+              "console.log(`Response: ${responseCode} - ${pm.response.status}`);",
+              "if (responseCode >= 400) {",
+              "    console.log('Error response body:', JSON.stringify(jsonData, null, 2));",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Pre-request script to validate request before sending",
+              "",
+              "// Ensure Content-Type header is set to application/json",
+              "pm.request.headers.upsert({",
+              "    key: 'Content-Type',",
+              "    value: 'application/json'",
+              "});",
+              "",
+              "// Email validation regex pattern",
+              "const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;",
+              "",
+              "// Clear any previous validation errors",
+              "pm.environment.unset('lastRequestValidationError');",
+              "",
+              "// Validate the request body",
+              "try {",
+              "    let bodyData = JSON.parse(pm.request.body.raw);",
+              "    ",
+              "    // Transform direct array to object with \"users\" key if needed",
+              "    // The API expects: { \"users\": [...] } format",
+              "    if (Array.isArray(bodyData)) {",
+              "        console.log('Transforming direct array to { users: [...] } format');",
+              "        bodyData = { users: bodyData };",
+              "        // Update the request body to the correct format",
+              "        pm.request.body.raw = JSON.stringify(bodyData, null, 2);",
+              "    }",
+              "    ",
+              "    // Validate that body has a \"users\" key with an array value",
+              "    if (!bodyData || typeof bodyData !== 'object' || !bodyData.users || !Array.isArray(bodyData.users)) {",
+              "        pm.environment.set('lastRequestValidationError', 'Request body must be an object with a \"users\" key containing an array');",
+              "        throw new Error('Request body must be an object with a \"users\" key containing an array');",
+              "    }",
+              "    ",
+              "    const usersArray = bodyData.users;",
+              "    ",
+              "    // Validate each user object has required fields: name, email, address",
+              "    const requiredFields = ['name', 'email', 'address'];",
+              "    ",
+              "    for (let i = 0; i < usersArray.length; i++) {",
+              "        const user = usersArray[i];",
+              "        ",
+              "        if (typeof user !== 'object' || user === null || Array.isArray(user)) {",
+              "            pm.environment.set('lastRequestValidationError', `Item at index ${i} is not a valid object`);",
+              "            throw new Error(`Item at index ${i} is not a valid object`);",
+              "        }",
+              "        ",
+              "        for (const field of requiredFields) {",
+              "            if (!user.hasOwnProperty(field)) {",
+              "                pm.environment.set('lastRequestValidationError', `User at index ${i} is missing required field: ${field}`);",
+              "                throw new Error(`User at index ${i} is missing required field: ${field}`);",
+              "            }",
+              "            ",
+              "            if (typeof user[field] !== 'string' || user[field].trim() === '') {",
+              "                pm.environment.set('lastRequestValidationError', `User at index ${i} has invalid ${field}: must be a non-empty string`);",
+              "                throw new Error(`User at index ${i} has invalid ${field}: must be a non-empty string`);",
+              "            }",
+              "        }",
+              "        ",
+              "        // Validate email format",
+              "        if (!emailRegex.test(user.email)) {",
+              "            pm.environment.set('lastRequestValidationError', `User at index ${i} has invalid email format: ${user.email}`);",
+              "            throw new Error(`User at index ${i} has invalid email format: ${user.email}`);",
+              "        }",
+              "    }",
+              "    ",
+              "    console.log('Request body validation passed for ' + usersArray.length + ' user(s)');",
+              "    ",
+              "} catch (error) {",
+              "    if (error.message.includes('JSON')) {",
+              "        pm.environment.set('lastRequestValidationError', 'Request body is not valid JSON');",
+              "    }",
+              "    console.error('Pre-request validation error:', error.message);",
+              "    throw error;",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"users\": [\n    {\n      \"name\": \"Jane Doe\",\n      \"address\": \"123 Main St\",\n      \"email\": \"jdoe@gmail.com\"\n    },\n    {\n      \"name\": \"John Doe\",\n      \"address\": \"987 Ridge Way\",\n      \"email\": \"johnd@yahoo.com\"    \n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/users",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "users"
+          ]
+        },
+        "description": "This is a POST request used to create one or more new users in the system.\n\n## Request Body\n\nThe request body should be JSON with one of the following formats:\n\n**Option 1: Object with users array**\n```json\n{\n  \"users\": [\n    {\n      \"name\": \"Jane Doe\",\n      \"address\": \"123 Main St\",\n      \"email\": \"jdoe@gmail.com\"\n    }\n  ]\n}\n```\n\n**Option 2: Direct array of users**\n```json\n[\n  {\n    \"name\": \"Jane Doe\",\n    \"address\": \"123 Main St\",\n    \"email\": \"jdoe@gmail.com\"\n  }\n]\n```\n\n## Required Fields\n\nEach user object must contain:\n- `name` (string): The user's full name\n- `email` (string): A valid email address\n- `address` (string): The user's address\n\n## Response\n\nA successful request will return a `200 OK` or `201 Created` status with the created user data, including the assigned `id` for each user."
+      },
+      "response": []
+    },
+    {
+      "name": "Retrieve All Users",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Successful POST request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/users",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "users"
+          ]
+        },
+        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+      },
+      "response": []
+    },
+    {
+      "name": "Retrieve a User by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:5000/users/1",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "users",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update a User by ID",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Jane Smith\",\r\n  \"address\": \"789 Oak St\",\r\n  \"email\": \"janesmith@gmail.com\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/users/1",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "users",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete a User by ID",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Jane Smith\",\r\n  \"address\": \"789 Oak St\",\r\n  \"email\": \"janesmith@gmail.com\"\r\n}\r\n"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/users/1",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "users",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create a New Product",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"products\": [\r\n    {\r\n        \"product_name\": \"apples\",\r\n        \"price\": 4.86\r\n    },\r\n    {\r\n        \"product_name\": \"bananas\",\r\n        \"price\": 3.25\r\n    }\r\n    ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/products",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Retrieve All Products",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"product_name\": \"apples\",\r\n    \"price\": 4.86\r\n}\r\n"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/products",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Retrieve a Product by ID",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"product_name\": \"apples\",\r\n    \"price\": 4.86\r\n}\r\n"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/products/1",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "products",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update a Product by ID",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"product_name\": \"apples\",\r\n    \"price\": 2.86\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/products/1",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "products",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete a Product by ID",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"product_name\": \"apples\",\r\n    \"price\": 2.86\r\n}"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/products/1",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "products",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create a New Order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"user_id\": 2\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/orders",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "orders"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Add a Product to an Order",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "\r\n"
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5000/orders/1/add_product/2",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "orders",
+            "1",
+            "add_product",
+            "2"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get All Orders for a User",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:5000/orders/user/2",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "orders",
+            "user",
+            "2"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get All Products for an Order",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:5000/orders/1/products",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "orders",
+            "1",
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Remove a Product from an Order",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:5000/orders/1/remove_product/2",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "orders",
+            "1",
+            "remove_product",
+            "2"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
